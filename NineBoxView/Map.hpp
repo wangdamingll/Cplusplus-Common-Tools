@@ -73,6 +73,12 @@ public:
         return InterestArea(from,dst,deleteArea,addArea);
     }
 
+    void AddObj(const Vector2i& dst,ObjBase& obj){
+        m_MapGridVec[dst.m_y*m_ColCount + dst.m_x].AddObj(obj);//近似实现类似unordered的查找效率
+    }
+
+    //... 其他函数
+
 private:
     set<int> GetAll9Grid(const Vector2i& pos){
         int curIndex = pos.m_y * m_ColCount + pos.m_x;      //当前索引值

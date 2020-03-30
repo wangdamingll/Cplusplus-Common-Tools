@@ -49,7 +49,9 @@ int main() {
         set<int> deleteArea,addArea;
         map.InterestArea(from,dst,deleteArea,addArea);
 
-        //具体的更新玩家视野
+        //具体更新玩家视野 简单举个例子
+        ObjBase * obj = new ObjBase();
+        map.AddObj(dst,*obj);
 
 #if __WIN32
         Sleep(1000 * 5);
