@@ -51,10 +51,13 @@ int main() {
 
         //具体更新玩家视野 简单举个例子
         ObjBase * obj = new ObjBase();
+        obj->SetPosX(dst.m_x);
+        obj->SetPosY(dst.m_y);
         map.AddObj(dst,*obj);
+        map.RemoveObj(*obj);
 
 #if __WIN32
-        Sleep(1000 * 5);
+        Sleep(1000 * 1);
 #endif
         //std::this_thread::sleep_for(std::chrono::seconds(5));
     }

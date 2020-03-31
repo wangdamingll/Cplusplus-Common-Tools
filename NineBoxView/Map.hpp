@@ -14,6 +14,14 @@ public:
     Map() = default;
 
 public:
+    /*地图初始化
+     * 参数:
+     * mapWidth:地图宽
+     * mapHeight:地图高
+     * gridSize:格子数
+     * 返回值:
+     * 无
+     * */
     void InitMap(int mapWidth,int mapHeight,int gridSize){
         m_ColCount = mapWidth / gridSize + 1;
         m_RowCount = mapHeight / gridSize + 1;
@@ -25,6 +33,13 @@ public:
         m_MapGridVec.resize(m_MaxIndex);
     }
 
+    /*计算移动坐标所在的格子坐标
+     * 参数:
+     * posX:移动的横坐标
+     * posY:移动的纵坐标
+     * 返回值:
+     * 格子所在的坐标
+     * */
     Vector2i ComputerGrid(int posX,int posY){
         if(posX<0) posX = 0;
         if(posY<0) posY = 0;
@@ -33,6 +48,13 @@ public:
         return {posX/m_GridSize,posY/m_GridSize};
     }
 
+    /*计算移动坐标所在格子的索引
+     * 参数:
+     * posX:移动的横坐标
+     * posY:移动的纵坐标
+     * 返回值:
+     * 格子所在的索引
+     * */
     int ComputerGridIndex(int posX, int posY){
         if(posX<0) posX = 0;
         if(posY<0) posY = 0;
@@ -41,6 +63,15 @@ public:
         return (posY/m_GridSize * m_ColCount + posX/m_GridSize);
     }
 
+    /*计算移动过程中增加或者减少的格子区域
+     * 参数:
+     * from:出发坐标点所在的格子坐标
+     * dst:目的坐标点所在的格子坐标
+     * deleteArea:移动过程中减少的格子区域(视野区域)
+     * addArea:移动过程中增加的格子区域
+     * 返回值:
+     * 无
+     * */
     void InterestArea(const Vector2i& from,const Vector2i& dst,set<int>& deleteArea, set<int>& addArea){
         set<int> fromArea = GetAll9Grid(from);
         set<int> dstArea = GetAll9Grid(dst);
@@ -67,26 +98,60 @@ public:
         Print(addArea);
     }
 
+    /*计算移动过程中增加或者减少的格子区域
+     * 参数:
+     * fromPosX:出发横坐标
+     * fromPosY:目的纵坐标
+     * dstPosX:目的点横坐标
+     * dstPosY:目的地安纵坐标
+     * deleteArea:移动过程中减少的格子区域(视野区域)
+     * addArea:移动过程中增加的格子区域
+     * 返回值:
+     * 无
+     * */
     void InterestArea(const int& fromPosX, const int& fromPosY,const int& dstPosX, const int& dstPosY,set<int>& deleteArea, set<int>& addArea){
         Vector2i from = ComputerGrid(fromPosX,fromPosY);
         Vector2i dst = ComputerGrid(dstPosX,dstPosY);
         return InterestArea(from,dst,deleteArea,addArea);
     }
 
-    void AddObj(const Vector2i& dst,ObjBase& obj){
-        m_MapGridVec[dst.m_y*m_ColCount + dst.m_x].AddObj(obj);//近似实现类似unordered的查找效率
+
+    /*将角色添加到对应的格子中
+     * 参数:
+     * pos:角色移动的目标点对应格子所在的坐标
+     * obj:角色对象
+     * 返回值:
+     * 无
+     * */
+    void AddObj(const Vector2i& pos,ObjBase& obj){
+        m_MapGridVec[pos.m_y*m_ColCount + pos.m_x].AddObj(obj);//近似实现类似unordered的查找效率
+    }
+
+    /*将角色在对应的格子中删除
+     * 参数:
+     * obj:角色对象
+     * 返回值:
+     * 无
+     * */
+    void RemoveObj(const ObjBase& obj){
+        m_MapGridVec[obj.GetPosY()*m_ColCount + obj.GetPosX()].RemoveObj(obj.GetUid());
     }
 
     //... 其他函数
 
 private:
+    /*计算出pos点周围的9宫格格子索引
+     * 参数:
+     * pos:9宫格中心点格子坐标点
+     * 返回值:
+     * 9宫格格子索引
+     * */
     set<int> GetAll9Grid(const Vector2i& pos){
         int curIndex = pos.m_y * m_ColCount + pos.m_x;      //当前索引值
         int curColIndexMax = (pos.m_y+1) * m_ColCount -1;   //当前行最大索引值
         int curColIndexMin = pos.m_y * m_ColCount ;       //当前行最小索引值
 
         set<int> setIndex;
-
         setIndex.emplace(curIndex); //中间格子
 
         int leftIndex = curIndex-1 ; //左边格子索引
@@ -117,7 +182,6 @@ private:
             setIndex.emplace(rightUpIndex);
         }
 
-
         int leftDownIndex = midDownIndex-1; //左下格子索引
         if(leftDownIndex>=0 && leftDownIndex>=curColIndexMin-m_ColCount){
             setIndex.emplace(leftDownIndex);
@@ -126,7 +190,6 @@ private:
         if(rightDownIndex>=0){
             setIndex.emplace(rightDownIndex);
         }
-
         return setIndex;
     }
 
