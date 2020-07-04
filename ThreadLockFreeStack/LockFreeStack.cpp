@@ -1,7 +1,4 @@
-﻿// LockFreeStack.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
-//
-
-#include <iostream>
+﻿#include <iostream>
 #include <atomic>
 #include <memory>
 #include <thread>
@@ -101,7 +98,7 @@ void PushThreadFun(LockFreeStack<int>& stack) {
     std::default_random_engine e(r());
     std::uniform_int_distribution<int> uniform_dist(1, 3);
     while (1) {
-        std::cout << "PushThreadFun1 id:" << std::this_thread::get_id()<<" value:"<<i << std::endl;
+        std::cout << "PushThreadFun id:" << std::this_thread::get_id()<<" value:"<<i << std::endl;
         stack.push(i++);
         std::this_thread::sleep_for(std::chrono::seconds(uniform_dist(e)));
     }
