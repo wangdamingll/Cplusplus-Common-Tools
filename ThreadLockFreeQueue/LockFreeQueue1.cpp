@@ -7,7 +7,9 @@
 #include <random>
 
 /*
-“单生产者，单消费者”(single-producer,single-consumerSPSC)队列
+ * github:https://github.com/cameron314/concurrentqueue
+ *
+ *“单生产者，单消费者”(single-producer,single-consumerSPSC)队列
 */
 
 template<typename T>
