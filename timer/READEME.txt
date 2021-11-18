@@ -1,0 +1,2 @@
+# valgrind detect
+valgrind --leak-check=full --log-file=valgrind.log --num-callers=30 ./test
