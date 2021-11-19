@@ -331,7 +331,7 @@ void itimer_evt_destroy(itimer_evt *evt);
 
 // start timer: repeat <= 0 (infinite repeat)
 void itimer_evt_start(itimer_mgr *mgr, itimer_evt *evt, 
-	IUINT32 period, int repeat);
+	IUINT32 period, int repeat, IUINT32 firstInterval);
 
 // stop timer
 void itimer_evt_stop(itimer_mgr *mgr, itimer_evt *evt);
@@ -370,10 +370,11 @@ public:
 
     /**
      * @param evtId
-     * @param period:ms
+     * @param period
      * @param repeat
+     * @param firstInterval
      */
-    void TimerEvtStart(uint64_t evtId, uint32_t period, uint32_t repeat);
+    void TimerEvtStart(uint64_t evtId, uint32_t period, uint32_t repeat, uint32_t firstInterval = 0);
 
     /**
      * @param evtId
@@ -423,11 +424,24 @@ TimerMgr timerMgr(now, interval);
     timerMgr.TimerEvtStart(timerId, period, repeat); \
 }
 
+#define REG_TIMER_FIRST(timerMgr, func, data, user ,period, repeat, firstInterval, timerId)   \
+{   \
+    timerId = timerMgr.TimerEvtInit(std::move(func), (void*)data, (void*)user);    \
+    timerMgr.TimerEvtStart(timerId, period, repeat, firstInterval); \
+}
+
 #define REG_CLASS_TIMER(timerMgr, func, ins, user, period, repeat, timerId)   \
 {   \
     auto callBack = std::bind(&func, ins, std::placeholders::_1, std::placeholders::_2);   \
     timerId = timerMgr.TimerEvtInit(std::move(callBack), (void*)ins, (void*)user);    \
     timerMgr.TimerEvtStart(timerId, period, repeat); \
+}
+
+#define REG_CLASS_TIMER_FIRST(timerMgr, func, ins, user, period, repeat, firstInterval, timerId)   \
+{   \
+    auto callBack = std::bind(&func, ins, std::placeholders::_1, std::placeholders::_2);   \
+    timerId = timerMgr.TimerEvtInit(std::move(callBack), (void*)ins, (void*)user);    \
+    timerMgr.TimerEvtStart(timerId, period, repeat, firstInterval); \
 }
 
 #define START_TIMER(timerMgr, timerId, period, repeat)  \

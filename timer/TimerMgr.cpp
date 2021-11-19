@@ -386,7 +386,7 @@ void itimer_evt_destroy(itimer_evt *evt)
 
 // start timer: repeat <= 0 (infinite repeat)
 void itimer_evt_start(itimer_mgr *mgr, itimer_evt *evt, 
-	IUINT32 period, int repeat)
+	IUINT32 period, int repeat, IUINT32 firstInterval)
 {
 	IUINT32 interval = mgr->interval;
 	IUINT32 expires;
@@ -395,7 +395,7 @@ void itimer_evt_start(itimer_mgr *mgr, itimer_evt *evt,
 	}
 	evt->period = period;
 	evt->repeat = repeat;
-	evt->slap = mgr->current + period;
+	evt->slap = mgr->current + firstInterval + period;
 	evt->mgr = mgr;
 	expires = (evt->slap - mgr->current + interval - 1) / interval;
 	if (expires >= 0x70000000) expires = 0x70000000;
@@ -444,12 +444,12 @@ uint64_t TimerMgr::TimerEvtInit(EvtCallBack&& callBack, void* data, void* user)
     return evt->evtId;
 }
 
-void TimerMgr::TimerEvtStart(uint64_t evtId, uint32_t period, uint32_t repeat)
+void TimerMgr::TimerEvtStart(uint64_t evtId, uint32_t period, uint32_t repeat, uint32_t firstInterval)
 {
     itimer_evt* pEvt = FindEvt(evtId);
     if(pEvt != nullptr)
     {
-        itimer_evt_start(mMgr, pEvt, period, repeat);
+        itimer_evt_start(mMgr, pEvt, period, repeat, firstInterval);
     }
 }
 

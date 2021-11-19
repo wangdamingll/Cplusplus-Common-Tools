@@ -15,16 +15,26 @@ void Test1()
     auto now = time(nullptr);
     INIT_TIMERMGR(timerMgr, now * 1000, 1);
 
-    TestA test;
     std::string* user = new std::string("test");
+
+    TestA test;
+    TestA testFirst;
 
     auto f = [](void* data, void* user){
         TestA* dataTmp = (TestA*)data;
         std::cout<<"count=" << ++dataTmp->count << " time="<<time(nullptr)<<std::endl;
     };
 
+    auto fFirst = [](void* data, void* user){
+        TestA* dataTmp = (TestA*)data;
+        std::cout<<"first count=" << ++dataTmp->count << " time="<<time(nullptr)<<std::endl;
+    };
+
     uint64_t timerId = 0;
     REG_TIMER(timerMgr, f, &test, nullptr, 1 * 1000, 0, timerId);
+
+    uint64_t timerIdFirst = 0;
+    REG_TIMER_FIRST(timerMgr, fFirst, &testFirst, nullptr, 1 * 1000, 0, 2 * 1000, timerIdFirst);
 
     auto cur = time(nullptr);
     while(true)
@@ -34,6 +44,7 @@ void Test1()
         if(now - cur >= 5)
         {
             STOP_TIMER(timerMgr, timerId);
+            UNREG_TIMER(timerMgr, timerIdFirst);
             break;
         }
     }
@@ -77,25 +88,11 @@ public:
             RUN_TIMERMGR(timerMgr, now * 1000)
             if(now - cur >= 5)
             {
-                STOP_TIMER(timerMgr, timerId);
+                UNREG_TIMER(timerMgr, timerId);
                 break;
             }
         }
 
-        START_TIMER(timerMgr, timerId,2 * 1000, 2);
-
-        while(true)
-        {
-            auto now = time(nullptr);
-            RUN_TIMERMGR(timerMgr, now * 1000);
-            if(this->count == 7)
-            {
-                STOP_TIMER(timerMgr, timerId);
-                break;
-            }
-        }
-
-        UNREG_TIMER(timerMgr, timerId);
         UNINIT_TIMERMGR(timerMgr);
 
         delete user;
