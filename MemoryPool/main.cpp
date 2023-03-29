@@ -14,74 +14,117 @@ public:
     using CycleFun = std::function<void(T*)>;
 public:
     inline MemPool(){objs_.fill(nullptr);}
-    virtual ~MemPool(){
-        for(auto &p : objs_){
-            if(p!= nullptr){
-                Free(p);//实际上调用2次obj->~T();1次释放真实物理内存
-                p= nullptr;
+    virtual ~MemPool()
+    {
+        for(auto *&p : objs_)
+        {
+            if(p != nullptr)
+            {
+                Free(p);
+                p = nullptr;
+            }
+        }
+
+        for(auto *&p : allobjs_)
+        {
+            if(p != nullptr)
+            {
+                p->empty = true;
+                p->~T();
+                Free(p);
+                p = nullptr;
             }
         }
     }
 
 public:
     template <typename... Args>
-    inline T* Get(Args&&... args){
+    inline T* Get(Args&&... args)
+    {
         T* obj = nullptr;
-        if(count_==0){
+        if(count_ == 0)
+        {
             obj = Alloc(std::forward(args)...);
-        }else{
+            obj->empty = false;//防止构造函数不初始化
+            obj->index = index_++;
+        }else
+        {
             -- count_;
+            //防止构造函数把index初始化
+            int index = objs_[count_]->index;
             obj = new(objs_[count_]) T(std::forward(args)...);
+            obj->empty = false;//防止构造函数不初始化
+            obj->index = index;
             objs_[count_] = nullptr;
         }
 
-        obj->index = index_++; //要求T中有index字段
-        if(static_cast<size_t >(index_)>=this->allobjs_.size()){
-            this->allobjs_.resize(index_*2 + 1);
+        assert(obj->index != -1);
+
+        if(static_cast<size_t >(index_) >= this->allobjs_.size()){
+            this->allobjs_.resize(index_ * 2 + 1);
         }
         this->allobjs_[obj->index] = obj;
         return obj;
     }
 
-    inline void Cycle(T* obj){
-        assert(obj!= nullptr);
-        if(count_<MF){
+    inline void Cycle(T* obj)
+    {
+        assert(obj != nullptr);
+        assert(static_cast<size_t>(obj->index) < allobjs_.size());
+        if(count_ < MF)
+        {
+            //防止析构函数将index也初始化了
+            int index = obj->index;
+            obj->empty = true;
             obj->~T();
+            obj->index = index;
             objs_[count_++] = obj;
             allobjs_[obj->index] = nullptr;
-        }else{
-            assert(static_cast<size_t >(obj->index)<allobjs_.size());
+        }else
+        {
             allobjs_[obj->index] = nullptr;
-            delete obj;
+            obj->empty = true;
+            obj->~T();
+            Free(obj);
         }
     }
 
-    inline T* GetByIndex(int index) const{
-        if(index < MF){
-            if(index > count_){
+    inline T* GetByIndex(int index) const
+    {
+        if(index == -1)
+        {
+            return nullptr;
+        }
+
+        if(static_cast<size_t>(index) < allobjs_.size())
+        {
+            if(allobjs_[index] != nullptr && (!allobjs_[index]->empty))
+            {
                 return allobjs_[index];
             }
-        }
-        if(index< static_cast<size_t>(allobjs_.size())){
-            return allobjs_[index];
         }
         return nullptr;
     }
 
 private:
     template <typename... Args>
-    static inline T* Alloc(Args&&... args){
-        return new T(std::forward(args)...);
+    static inline T* Alloc(Args&&... args)
+    {
+        char* p = new char[sizeof(T) + sizeof(int)];
+        return new (p) T(std::forward(args)...);
     }
 
-    static inline void Free(T* obj){
-        if(obj!= nullptr){
-            delete obj;
+    static inline void Free(T* obj)
+    {
+        if(obj != nullptr)
+        {
+            char* p = reinterpret_cast<char*>(obj);
+            delete [] p;
         }
     }
 private:
-    int index_=0;
-    int count_=0;
+    int index_ = 0;
+    int count_ = 0;
     std::vector<T*> allobjs_;
     std::array<T*,MF> objs_;
 };
@@ -90,6 +133,11 @@ class A{
 public:
     std::string string = "";
     int index = -1; //内存池中初始索引
+    bool empty = false;
+    virtual ~A()
+    {
+        empty = true;
+    }
 };
 
 
