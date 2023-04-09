@@ -1,4 +1,7 @@
-﻿#include <iostream>
+﻿#ifndef _LOCK_FREE_QUEUE1__H__
+#define _LOCK_FREE_QUEUE1__H__
+
+#include <iostream>
 
 #include <memory>
 #include <atomic>
@@ -93,13 +96,14 @@ void GetThreadFun(LockFreeQueue<int>& queue) {
     }
 }
 
-int main()
-{
-    LockFreeQueue<int> queue;
-    std::thread pushT(PushThreadFun, std::ref(queue));
-    std::thread getT(GetThreadFun, std::ref(queue));
+// int main()
+// {
+//     LockFreeQueue<int> queue;
+//     std::thread pushT(PushThreadFun, std::ref(queue));
+//     std::thread getT(GetThreadFun, std::ref(queue));
 
-    pushT.join();
-    getT.join();
-}
+//     pushT.join();
+//     getT.join();
+// }
 
+#endif //_LOCK_FREE_QUEUE1__H__
