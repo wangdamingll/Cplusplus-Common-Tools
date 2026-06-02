@@ -1,5 +1,9 @@
 #include "CurlMgr.h"
 
+namespace {
+    int g_curlGlobalRef = 0;
+}
+
 CurlMgr::CurlMgr() : m_pMultiHandle(nullptr)
 {}
 
@@ -11,26 +15,54 @@ CurlMgr::~CurlMgr()
 
 int32_t CurlMgr::Init()
 {
+    if(g_curlGlobalRef == 0)
+    {
+        if(curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK)
+        {
+            return CurlError_GlobalInitFail;
+        }
+    }
+    ++g_curlGlobalRef;
+
     m_pMultiHandle = curl_multi_init();
     if(m_pMultiHandle == nullptr)
     {
+        if(--g_curlGlobalRef == 0)
+        {
+            curl_global_cleanup();
+        }
         return CurlError_MultiInitFail;
     }
+    m_bInitDone = true;
     return 0;
 }
 
 void CurlMgr::Final()
 {
+    for(auto& urlReq : m_mapReq)
+    {
+        if(m_pMultiHandle != nullptr)
+        {
+            curl_multi_remove_handle(m_pMultiHandle, urlReq.first);
+        }
+        delete urlReq.second;
+    }
+    m_mapReq.clear();
+
     if(m_pMultiHandle != nullptr)
     {
         curl_multi_cleanup(m_pMultiHandle);
+        m_pMultiHandle = nullptr;
     }
-    
-    for(auto& urlReq : m_mapReq)
+
+    if(m_bInitDone)
     {
-        curl_easy_cleanup(urlReq.first);
+        m_bInitDone = false;
+        if(--g_curlGlobalRef == 0)
+        {
+            curl_global_cleanup();
+        }
     }
-    m_mapReq.clear();
 }
 
 int32_t CurlMgr::AddRequest(const std::string& sUrl, const std::string& sPost, CurlFun&& fResCall, void* sUserData, const char* headers)
@@ -166,14 +198,14 @@ void CurlMgr::Update()
         {
             CURL* pHandle = msg->easy_handle;
             UrlReqMapIter iter = m_mapReq.find(pHandle);
+            curl_multi_remove_handle(m_pMultiHandle, pHandle);
+
             if(iter != m_mapReq.end())
             {
                 iter->second->fCall(msg->data.result, std::move(iter->second->sResult), iter->second->sUserData);
                 delete iter->second;
                 m_mapReq.erase(iter);
             }
-            
-            curl_multi_remove_handle(m_pMultiHandle, pHandle);
         }
     }
 }

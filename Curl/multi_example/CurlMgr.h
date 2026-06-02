@@ -1,6 +1,8 @@
 #ifndef __CURL_MGR_H__
 #define __CURL_MGR_H__
 
+#include <cstdint>
+#include <string>
 #include <functional>
 #include <unordered_map>
 
@@ -43,7 +45,8 @@ public:
         CurlError_SetOptFail = -4,
         CurlError_MultiAddFail = -5,
         CurlError_AllocUrlReqFail = -6,
-        CurlError_Slist_Append = -7
+        CurlError_Slist_Append = -7,
+        CurlError_GlobalInitFail = -8
 
     };
 
@@ -142,6 +145,7 @@ private:
 
     UrlReqMap m_mapReq;
     CURLM* m_pMultiHandle = nullptr;
+    bool m_bInitDone = false;
 };
 
 
