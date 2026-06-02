@@ -46,7 +46,8 @@ public:
         CurlError_MultiAddFail = -5,
         CurlError_AllocUrlReqFail = -6,
         CurlError_Slist_Append = -7,
-        CurlError_GlobalInitFail = -8
+        CurlError_GlobalInitFail = -8,
+        CurlError_NotInit = -9
 
     };
 

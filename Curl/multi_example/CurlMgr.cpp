@@ -15,6 +15,11 @@ CurlMgr::~CurlMgr()
 
 int32_t CurlMgr::Init()
 {
+    if(m_bInitDone)
+    {
+        return 0;
+    }
+
     if(g_curlGlobalRef == 0)
     {
         if(curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK)
@@ -67,6 +72,11 @@ void CurlMgr::Final()
 
 int32_t CurlMgr::AddRequest(const std::string& sUrl, const std::string& sPost, CurlFun&& fResCall, void* sUserData, const char* headers)
 {
+    if(!m_bInitDone)
+    {
+        return CurlError_NotInit;
+    }
+
     if(m_mapReq.size() > MAX_REQ_SIZE)
     {
         return CurlError_CurlSizeLimit;
